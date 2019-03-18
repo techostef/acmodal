@@ -217,7 +217,7 @@
                         th.ke = 1;
                         var paginationNum = 0;
                         th.resultSearch = th.resultJson;
-                        temp = th.generatelist(1);
+                        temp = th.generatelist(0);
                         if(row>10){
                             paginationNum = parseInt(row/10);
                             paginationNum = row%10>=1?paginationNum+1:paginationNum;
@@ -259,7 +259,7 @@
                 th.footerRow.append(th.submitContainer);
                 th.submitContainer.append(th.submit);
                 th.submitContainer.append(th.cancel);
-
+                th.search.val("");
                
                 th.getdataajax();
                 $("body").append(th.modal); 
