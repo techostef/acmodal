@@ -4,10 +4,6 @@
     
     var ACModel = function ( element, options ) {
         this.options = $.extend({}, $.fn.acmodel.defaults, options);
-        if(typeof(this.options.updateUrl)=="string"){
-            
-        }
-        this.template = this.options.template || this.template
         this.$source = $(element);
         this.data = [] ;
         this.url = this.options.url;
@@ -61,12 +57,27 @@
             this.containerForm = "<div style='"+style+"'></div>";
             style = "width: 100%;";
            
-            this.formAutoCompleteModal = "<div class='form-group'><label>Search</label></div>";
+            this.formAutoCompleteModal = "<div class='form-group' style='margin-bottom:0px;'><label>Search</label></div>";
             this.formList = "<div></div>";
             this.pagination = '<div class="pull-right pagination"></div>';
             this.pagination = $(this.pagination);
             this.paginationContainer = '<ul class="pagination"></ul>';
             this.paginationContainer = $(this.paginationContainer);
+        }
+        , generateSystem:function(){
+            this.setup();
+            this.paginationAct();
+            this.searching();
+            this.submitAct();
+            this.cancelAct();
+            
+            // modal
+            this.modal = $(this.outerTemplate);
+            this.containerForm = $(this.containerForm);
+            this.formAutoCompleteModal = $(this.formAutoCompleteModal);
+            this.formList = $(this.formList);
+            
+            this.search.val("");
         }
         , getUrl:function(){
             return this.url;
@@ -86,7 +97,6 @@
                         return false; 
                     }
                 })
-                
                 if(val==false){
                     alert("Tolong Pilih.");
                     return false;
@@ -145,19 +155,23 @@
             this.search.keyup(function(){
                 val = $(this).val().toLowerCase();
                 th.resultSearch = th.resultJson.filter(function(item){
-                    return item.b.toLowerCase().indexOf(val)>=0||item.c.toLowerCase().indexOf(val)>=0;
+                    return item.b.toLowerCase().indexOf(val)>=0;
                 })
                 th.formList.html("");
                 th.formList.html(th.dataKe(1));
-                var paginationNum = 0;
-                var row = th.resultSearch.length;
-                paginationNum = parseInt(row/10);
-                paginationNum = row%10>=1?paginationNum+1:paginationNum;
-                th.ke_max = paginationNum;
-                th.paginationContainer.html("");
-                th.paginationContainer.html(th.paginationlist(paginationNum));
+                th.paginationGenerate();
             })
         }
+        , paginationGenerate:function(){
+            var paginationNum = 0;
+            var row = this.resultSearch.length;
+            paginationNum = parseInt(row/10);
+            paginationNum = row%10>=1?paginationNum+1:paginationNum;
+            this.ke_max = paginationNum;
+            this.paginationContainer.html("");
+            this.paginationContainer.html(this.paginationlist(paginationNum));
+        }
+        // generate list data yang ditampilkan
         , generatelist: function(row){
             var id;
             var th=this;
@@ -169,12 +183,13 @@
                 if(!item)break;
                 id = row+""+Math.floor(Math.random() * 100);
                 var checked = item.a==this.$source.val()?"checked":"";
-                var input = "<input type='radio' id='"+id+"' data-text='"+item.b+" - "+item.c+"' name='checkboxautocomplate' value='"+item.a+"' "+checked+">";
-                var label = "<label onclick='"+th.labelClick(id)+"'>"+item.b+" - "+item.c+"</label>";
+                var input = "<input type='radio' id='"+id+"' data-text='"+item.b+"' name='checkboxautocomplate' value='"+item.a+"' "+checked+">";
+                var label = "<label onclick='"+th.labelClick(id)+"' style='margin-left:5px;'>"+item.b+"</label>";
                 temp += "<li class='list-group-item' data-target='"+item.a+"'>"+input+""+label+"</li>";
             }
             return temp;
         }
+        // generate data ke pagination brp
         , dataKe: function(ke){
             this.ke = ke;
             var row;
@@ -200,6 +215,15 @@
                 th.formList.html(th.dataKe($(this).attr("data-ke")));
             })
         }
+        , changeData(data){
+            this.resultJson = data;
+            this.resultSearch = data;
+            this.formList.html("");
+            this.formList.html(this.dataKe(1));
+
+            // generate pagination footer
+            this.paginationGenerate();
+        }
         , getdataajax: function(){
             var th = this;
             $.ajax({
@@ -222,13 +246,16 @@
                             paginationNum = parseInt(row/10);
                             paginationNum = row%10>=1?paginationNum+1:paginationNum;
                             th.ke_max = paginationNum;
+                        }else{
+                            paginationNum = 1;
                         }
                         th.formList.append(temp);
+                        // start pagination generate for first for container pagination, improtant
+                        // pagination footer
                         th.footerRow.append(th.pagination);
                         th.pagination.append(th.paginationContainer);
                         th.paginationContainer.append(th.paginationlist(paginationNum));
-                        // row+=2;
-                        // th.containerForm.css({height:(row*44)+"px"});
+                        // end pagination generate for first for container pagination, improtant
                     }
                 }
             });
@@ -236,21 +263,11 @@
         , trigger: function () {
             var th = this;
             this.$source.click(function(){
-                th.setup();
-                th.paginationAct();
-                th.searching();
-                th.submitAct();
-                th.cancelAct();
-                
-                // modal
-                
-                th.modal = $(th.outerTemplate);
-                
-                th.containerForm = $(th.containerForm);
+                if(typeof(th.formList)=="string"){
+                    th.generateSystem();
+                }
+
                 th.modal.append(th.containerForm);
-                
-                th.formAutoCompleteModal = $(th.formAutoCompleteModal);
-                th.formList = $(th.formList);
                 th.containerForm.append(th.formAutoCompleteModal);
                 th.formAutoCompleteModal.append(th.search);
                 th.formAutoCompleteModal.append(th.formList);
@@ -259,9 +276,16 @@
                 th.footerRow.append(th.submitContainer);
                 th.submitContainer.append(th.submit);
                 th.submitContainer.append(th.cancel);
-                th.search.val("");
-               
-                th.getdataajax();
+
+                if(th.options.data){
+                    th.changeData(th.options.data);
+                }
+                else if(th.options.url){
+                    th.getdataajax();
+                }else if(th.resultJson.length>0){
+                    // th.changeData(th.resultJson);
+                }  
+                              
                 $("body").append(th.modal); 
                 th.modal.click(function(e){
                     if(e.target.id=="templateAutoComplate"){
@@ -276,8 +300,21 @@
     };
 
     $.fn.acmodel = function ( option ) {
-        if(option=='return'){
+        if(typeof(option)=='undefined'){
+            return this.each(function () {
+                var $this = $(this)
+                    , data = $this.data('acmodel')
+                    , options = typeof option == 'object' && option;
+                if(!data) {$this.data('acmodel', (data = new ACModel(this, options)));}
+                if (typeof option == 'string') {data[option]();}
+            });
+        }else if(option=='return'){
             return this.data('acmodel');
+        }else if(option.changeData){
+            this.data('acmodel').generateSystem();
+            this.data('acmodel').changeData(option.changeData);
+        }else if(option.changeUrl){
+            this.data('acmodel').setUrl(option.changeUrl);
         }else{
             return this.each(function () {
                 var $this = $(this)
