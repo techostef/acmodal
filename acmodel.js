@@ -63,22 +63,12 @@
             this.pagination = $(this.pagination);
             this.paginationContainer = '<ul class="pagination"></ul>';
             this.paginationContainer = $(this.paginationContainer);
-        }
-        , generateSystem:function(){
-            this.setup();
-            this.paginationAct();
-            this.searching();
-            this.submitAct();
-            this.cancelAct();
-            
-            // modal
             this.modal = $(this.outerTemplate);
             this.containerForm = $(this.containerForm);
             this.formAutoCompleteModal = $(this.formAutoCompleteModal);
             this.formList = $(this.formList);
-            
-            this.search.val("");
         }
+
         , getUrl:function(){
             return this.url;
         }
@@ -99,7 +89,7 @@
                 })
                 if(val==false){
                     alert("Tolong Pilih.");
-                    return false;
+                    return true;
                 }else{
                     if(th.$source.prop("tagName")=="SELECT"){
                         th.$source.html("");
@@ -121,6 +111,7 @@
         , cancelAct: function(){
             var th = this;
             this.cancel.click(function(){
+                console.log("cancel");
                 th.modal.remove();
             })
         }
@@ -266,8 +257,13 @@
             var th = this;
             this.$source.click(function(){
                 if(typeof(th.formList)=="string"){
-                    th.generateSystem();
+                    th.setup();
                 }
+                
+                th.paginationAct();
+                th.searching();
+                th.submitAct();
+                th.cancelAct();
 
                 th.modal.append(th.containerForm);
                 th.containerForm.append(th.formAutoCompleteModal);
@@ -278,6 +274,7 @@
                 th.footerRow.append(th.submitContainer);
                 th.submitContainer.append(th.submit);
                 th.submitContainer.append(th.cancel);
+                th.search.val("");
 
                 if(th.options.data){
                     th.changeData(th.options.data);
@@ -313,7 +310,7 @@
         }else if(option=='return'){
             return this.data('acmodel');
         }else if(option.changeData){
-            this.data('acmodel').generateSystem();
+            this.data('acmodel').setup();
             this.data('acmodel').changeData(option.changeData);
         }else if(option.changeUrl){
             this.data('acmodel').setUrl(option.changeUrl);
