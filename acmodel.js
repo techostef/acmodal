@@ -249,11 +249,13 @@
                         }else{
                             paginationNum = 1;
                         }
+                        th.formList.html("");
                         th.formList.append(temp);
                         // start pagination generate for first for container pagination, improtant
                         // pagination footer
                         th.footerRow.append(th.pagination);
                         th.pagination.append(th.paginationContainer);
+                        th.paginationContainer.html("");
                         th.paginationContainer.append(th.paginationlist(paginationNum));
                         // end pagination generate for first for container pagination, improtant
                     }
